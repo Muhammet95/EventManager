@@ -1,0 +1,48 @@
+version: "3.8"
+services:
+  mysql:
+    platform: linux/x86_64
+    image: mysql
+    container_name: events.mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: main
+      MYSQL_DATABASE: main_db
+      MYSQL_PASSWORD: main
+      MYSQL_USER: main
+    ports:
+      - "3306:3306"
+    volumes:
+      - db:/var/lib/mysql
+      - ./docker-compose/mysql/is.cnf:/etc/mysql/conf.d/my.cnf
+
+  php:
+    build:
+      args:
+        user: admin
+        uid: 1000
+      context: ./
+      dockerfile: Dockerfile
+    container_name: events.php
+    restart: unless-stopped
+    environment:
+      - PHP_DIR_OWNER=1000
+      - RUN_USER=1000
+    volumes:
+      - ./:/var/www
+
+  nginx:
+    image: nginx:alpine
+    container_name: events.nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - TZ=Europe/Istanbul
+    volumes:
+      - ./:/var/www
+      - ./docker-compose/nginx:/etc/nginx/conf.d/
+
+volumes:
+  db:
